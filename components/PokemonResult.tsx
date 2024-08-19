@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { useRouter } from 'next/router';
 import { Container, Typography, List, ListItem, Button, CircularProgress, Paper, Divider, Box } from '@mui/material';
@@ -31,35 +31,37 @@ const GET_POKEMON_BY_NAME = gql`
   }
 `;
 
-
 export default function PokemonResult() {
   const router = useRouter();
   const { name } = router.query;
+
+  const [hasFetched, setHasFetched] = useState(false);
 
   const { loading, error, data } = useQuery(GET_POKEMON_BY_NAME, {
     variables: { name },
     skip: !name,
     fetchPolicy: 'cache-and-network',
+    onCompleted: () => setHasFetched(true),
   });
 
-  if (loading) return <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    height="50vh"
-  >
-    <CircularProgress />
-  </Box>;
-  if (error || !data?.pokemon) return (<Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    height="50vh"
-  >
-    <Typography variant="h6" color="error">
-      Not Found
-    </Typography>
-  </Box>)
+  useEffect(() => {
+    if (name) {
+      setHasFetched(false);
+    }
+  }, [name]);
+
+  if (loading) return (
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      height="50vh"
+    >
+      <CircularProgress />
+    </Box>
+  );
+
+  if (!hasFetched || error || !data?.pokemon) return null;
 
   const { pokemon } = data;
 
