@@ -1,21 +1,42 @@
-import { Box, Button, Container, TextField, Typography } from '@mui/material';
+import { gql, useQuery } from '@apollo/client';
+import { Autocomplete, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
-import React, { useState, useEffect, MouseEvent } from 'react';
+import React, { useState, useEffect } from 'react';
+
+const GET_POKEMON_NAMES = gql`
+  query GetPokemonNames {
+    pokemons(first: 100) {
+      name
+    }
+  }
+`;
 
 export default function SearchInput() {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   useEffect(() => {
     if (router.query.name) {
       setSearchTerm(router.query.name as string);
+      setSelectedOption(router.query.name as string);
     }
   }, [router.query.name]);
 
-  const handleSearch = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    router.push(`/?name=${searchTerm}`);
+  const { loading, error, data } = useQuery(GET_POKEMON_NAMES, {
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const pokemonNames = data?.pokemons.map((pokemon: { name: string }) => pokemon.name) || [];
+
+  const handleSearch = () => {
+    if (selectedOption) {
+      router.push(`/?name=${selectedOption}`);
+    }
   };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error loading Pokémon names.</p>;
 
   return (
     <Container maxWidth="sm">
@@ -23,12 +44,20 @@ export default function SearchInput() {
         <Typography variant="h4" gutterBottom>
           Search Pokémon
         </Typography>
-        <TextField
-          variant="outlined"
+        <Autocomplete
+          freeSolo
           fullWidth
-          label="Pokémon Name"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={selectedOption}
+          options={pokemonNames}
+          onChange={(event, newValue) => setSelectedOption(newValue)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Pokémon Name"
+              variant="outlined"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          )}
         />
         <Button
           variant="contained"

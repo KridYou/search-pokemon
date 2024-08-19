@@ -1,7 +1,8 @@
 import React from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { useRouter } from 'next/router';
-import { Container, Typography, List, ListItem, Button, CircularProgress, Paper, Divider } from '@mui/material';
+import { Container, Typography, List, ListItem, Button, CircularProgress, Paper, Divider, Box } from '@mui/material';
+import { Attack } from '../interfaces/Pokemon';
 
 const GET_POKEMON_BY_NAME = gql`
   query GetPokemonByName($name: String!) {
@@ -30,11 +31,6 @@ const GET_POKEMON_BY_NAME = gql`
   }
 `;
 
-interface Attack {
-  name: string;
-  type: string;
-  damage: number;
-}
 
 export default function PokemonResult() {
   const router = useRouter();
@@ -46,8 +42,24 @@ export default function PokemonResult() {
     fetchPolicy: 'cache-and-network',
   });
 
-  if (loading) return <CircularProgress />;
-  if (error || !data?.pokemon) return <Typography variant="h6" color="error">Not Found</Typography>;
+  if (loading) return <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    height="50vh"
+  >
+    <CircularProgress />
+  </Box>;
+  if (error || !data?.pokemon) return (<Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    height="50vh"
+  >
+    <Typography variant="h6" color="error">
+      Not Found
+    </Typography>
+  </Box>)
 
   const { pokemon } = data;
 
@@ -63,7 +75,7 @@ export default function PokemonResult() {
       <Typography variant="h6" color="textSecondary" paragraph>
         Types: {pokemon.types.join(', ')}
       </Typography>
-      
+
       <Divider sx={{ marginY: 2 }} />
 
       <Typography variant="h6" gutterBottom>
